@@ -1744,4 +1744,36 @@ class Tests_Query_TaxQuery extends WP_UnitTestCase {
 		$this->assertSameSets( array( $p ), $q->posts );
 		$this->assertStringNotContainsString( 'LIMIT 1', $query );
 	}
+
+	/**
+	 * @ticket 57300
+	 *
+	 * @covers WP_Query::parse_tax_query
+	 */
+	public function test_rewrite_hierarchical_array_query_param() {
+		register_taxonomy( 'wptests_tax', 'post', array( 'hierarchical' => true, 'rewrite' => array( 'hierarchical' => true ) ) );
+		$name = 'foobar';
+		$t    = self::factory()->term->create(
+			array(
+				'taxonomy' => 'wptests_tax',
+				'name'     => $name,
+			)
+		);
+
+		$q = new WP_Query(
+			array(
+				'fields'    => 'ids',
+				'wptests_tax' => [$name],
+				'tax_query' => array(
+					array(
+						'taxonomy' => 'wptests_tax',
+						'field'    => 'name',
+						'terms'    => $name,
+					),
+				),
+			)
+		);
+		// If we got this far, no errors were thrown.
+		$this->expectNotToPerformAssertions();
+	}
 }
